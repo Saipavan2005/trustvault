@@ -1,0 +1,9 @@
+[Unit]
+Description=TrustVault audit anchor to Object Lock bucket
+
+[Service]
+Type=oneshot
+User=ec2-user
+WorkingDirectory=/opt/trustvault
+EnvironmentFile=/etc/trustvault.env
+ExecStart=/opt/trustvault/venv/bin/python scripts/anchor.py

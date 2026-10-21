@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}All documents · TrustVault{% endblock %}
+{% block body %}
+<h1>All documents</h1>
+<p class="sub">Metadata only. To open a document an admin must be granted access, and that grant is audited.</p>
+<div class="card"><table><tr><th>Name</th><th>Category</th><th>Owner</th><th>Active grants</th><th>Uploaded</th><th>Status</th></tr>
+{% for r in rows %}<tr><td>{{ r.name }}</td><td>{{ r.category }}</td><td>{{ r.owner_email }}</td><td>{{ r.grants }}</td><td>{{ r.created_at.strftime('%d %b %Y') }}</td>
+<td><span class="pill {{ 'no' if r.deleted_at else 'ok' }}">{{ 'deleted' if r.deleted_at else 'active' }}</span></td></tr>{% endfor %}</table></div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · TrustVault{% endblock %}
+{% block body %}
+<h1>{{ title }}</h1>
+<p class="sub">Append-only and hash-chained. Admins see metadata, never document contents.</p>
+<form class="card row" method="post" action="{{ url_for('admin.verify') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button class="btn" type="submit">Verify audit chain</button>
+</form>
+{% if verify %}
+  {% if verify.ok %}<div class="good" role="status">Chain intact: {{ verify.rows }} rows checked, {{ verify.anchors }} external anchors matched.</div>
+  {% else %}<div class="alert" role="alert">Chain check failed at row {{ verify.bad_id }}: {{ verify.reason }}.</div>{% endif %}
+{% else %}
+  {% for a in alerts %}<div class="alert" role="alert">{{ a.actor_email }} had {{ a.n }} refused attempts in the last 10 minutes.</div>{% endfor %}
+  <form class="card row" method="get">
+    <div><label for="outcome">Outcome</label><select id="outcome" name="outcome"><option value="">All</option><option value="allowed" {{ 'selected' if outcome=='allowed' }}>Allowed</option><option value="denied" {{ 'selected' if outcome=='denied' }}>Denied</option></select></div>
+    <button class="btn2" type="submit">Filter</button>
+  </form>
+  <div class="card"><table><tr><th>Time (UTC)</th><th>Who</th><th>Action</th><th>Document</th><th>Outcome</th><th>IP</th><th>Detail</th></tr>
+  {% for r in rows %}<tr><td class="mono">{{ r.ts[:19] }}</td><td>{{ r.actor_email or '-' }}</td><td>{{ r.action }}</td>
+  <td class="mono">{{ (r.document_id|string)[:8] if r.document_id else '-' }}</td>
+  <td><span class="pill {{ 'ok' if r.outcome == 'allowed' else 'no' }}">{{ r.outcome }}</span></td><td class="mono">{{ r.ip or '-' }}</td><td class="mono">{{ r.detail }}</td></tr>
+  {% endfor %}</table>
+  <p>{% if page > 1 %}<a href="?page={{ page - 1 }}&outcome={{ outcome }}">Newer</a>{% endif %} {% if rows|length == 100 %}<a href="?page={{ page + 1 }}&outcome={{ outcome }}">Older</a>{% endif %}</p></div>
+{% endif %}
+{% endblock %}

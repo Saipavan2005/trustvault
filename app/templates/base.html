@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}TrustVault{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if user %}
+<header class="top">
+  <a class="brand" href="{{ url_for('docs.list_docs') }}">TrustVault</a>
+  <a href="{{ url_for('docs.list_docs') }}">Documents</a>
+  {% if user.role == 'admin' %}
+  <a href="{{ url_for('admin.users') }}">Users</a>
+  <a href="{{ url_for('admin.activity') }}">Activity</a>
+  <a href="{{ url_for('admin.permissions') }}">Permission changes</a>
+  <a href="{{ url_for('admin.documents') }}">All documents</a>
+  {% endif %}
+  <div class="who"><span>{{ user.email }} ({{ user.role }})</span>
+    <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn2" type="submit">Sign out</button></form>
+  </div>
+</header>
+{% endif %}
+<main>{% block body %}{% endblock %}</main>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Documents · TrustVault{% endblock %}
+{% block body %}
+<h1>Documents</h1>
+<p class="sub">You see only documents you own or were given access to.</p>
+{% if user.role == 'owner' %}
+<form class="card row" method="post" action="{{ url_for('docs.upload') }}" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div><label for="file">File (pdf, docx, xlsx, png, jpg, txt; max 10 MB)</label><input id="file" name="file" type="file" required></div>
+  <div><label for="cat">Category</label><input id="cat" name="category" maxlength="40"></div>
+  <button class="btn" type="submit">Upload document</button>
+</form>
+{% endif %}
+<form class="card row" method="get" action="{{ url_for('docs.list_docs') }}">
+  <div><label for="q">Name</label><input id="q" name="q" value="{{ q.get('q','') }}"></div>
+  <div><label for="owner">Owner</label><input id="owner" name="owner" value="{{ q.get('owner','') }}"></div>
+  <div><label for="category">Category</label><input id="category" name="category" value="{{ q.get('category','') }}"></div>
+  <div><label for="from">From</label><input id="from" name="from" type="date" value="{{ q.get('from','') }}"></div>
+  <div><label for="to">To</label><input id="to" name="to" type="date" value="{{ q.get('to','') }}"></div>
+  <button class="btn2" type="submit">Search</button>
+</form>
+<div class="card">
+{% if docs %}
+<table><tr><th>Name</th><th>Category</th><th>Owner</th><th>Your access</th><th>Uploaded</th><th>Size</th></tr>
+{% for d in docs %}
+<tr><td><a href="{{ url_for('docs.view', doc_id=d.id) }}">{{ d.name }}</a></td><td>{{ d.category }}</td><td>{{ d.owner_email }}</td>
+<td><span class="pill {{ 'ok' if d.access == 'owner' else '' }}">{{ d.access }}{% if d.shared_count %} · shared with {{ d.shared_count }}{% endif %}</span></td>
+<td>{{ d.created_at.strftime('%d %b %Y') }}</td><td>{{ (d.size / 1024) | round | int }} KB</td></tr>
+{% endfor %}</table>
+{% else %}<p class="sub">No documents match. {% if user.role == 'owner' %}Upload one above.{% else %}Nothing has been shared with you yet.{% endif %}</p>{% endif %}
+</div>
+{% endblock %}

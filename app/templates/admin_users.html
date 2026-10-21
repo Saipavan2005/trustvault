@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Users · TrustVault{% endblock %}
+{% block body %}
+<h1>Users</h1>
+<p class="sub">Disabling a user ends their sessions immediately.</p>
+<form class="card row" method="post" action="{{ url_for('admin.users_create') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div><label for="email">Email</label><input id="email" name="email" type="email" required></div>
+  <div><label for="role">Role</label><select id="role" name="role">{% for r in roles %}<option>{{ r }}</option>{% endfor %}</select></div>
+  <div><label for="password">Initial password (12+ characters)</label><input id="password" name="password" type="password" minlength="12" required autocomplete="new-password"></div>
+  <button class="btn" type="submit">Create user</button>
+</form>
+<div class="card"><table><tr><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+{% for r in rows %}<tr><td>{{ r.email }}</td><td>{{ r.role }}</td>
+<td><span class="pill {{ 'ok' if r.active else 'no' }}">{{ 'active' if r.active else 'disabled' }}</span></td>
+<td><form class="inline" method="post" action="{{ url_for('admin.users_disable' if r.active else 'admin.users_enable', uid=r.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn2" type="submit">{{ 'Disable' if r.active else 'Enable' }}</button></form></td></tr>
+{% endfor %}</table></div>
+{% endblock %}

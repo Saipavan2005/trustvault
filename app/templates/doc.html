@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.name }} · TrustVault{% endblock %}
+{% block body %}
+<h1>{{ doc.name }}</h1>
+<p class="sub">{{ doc.category or 'No category' }} · owner {{ owner }} · {{ (doc.size / 1024) | round | int }} KB · your access: {{ 'owner' if doc.level == 3 else doc.permission }}</p>
+<div class="card">
+  <p class="mono">SHA-256 {{ doc.sha256 }}</p>
+  <a class="btn" href="{{ url_for('docs.download', doc_id=doc.id) }}">Download</a>
+</div>
+
+{% if doc.level >= 2 %}
+<form class="card row" method="post" action="{{ url_for('docs.edit', doc_id=doc.id) }}" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div><label for="name">Name</label><input id="name" name="name" value="{{ doc.name }}" maxlength="120"></div>
+  <div><label for="category">Category</label><input id="category" name="category" value="{{ doc.category }}" maxlength="40"></div>
+  <div><label for="file">Replace file (optional)</label><input id="file" name="file" type="file"></div>
+  <button class="btn2" type="submit">Save changes</button>
+</form>
+{% endif %}
+
+{% if doc.level == 3 %}
+<div class="card">
+  <h2>Share this document</h2>
+  <form class="row" method="post" action="{{ url_for('docs.grant', doc_id=doc.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div><label for="email">Person's email</label><input id="email" name="email" type="email" required></div>
+    <div><label for="permission">Access</label><select id="permission" name="permission"><option value="read">Read</option><option value="edit">Edit</option></select></div>
+    <button class="btn" type="submit">Confirm grant</button>
+  </form>
+  {% for s in suggestions %}
+  <form class="row" method="post" action="{{ url_for('docs.grant', doc_id=doc.id) }}" style="margin-top:12px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="email" value="{{ s.email }}"><input type="hidden" name="permission" value="read"><input type="hidden" name="suggested" value="1">
+    <span>Suggestion: you share other {{ doc.category }} documents with {{ s.email }}. Nothing is shared until you confirm.</span>
+    <button class="btn2" type="submit">Grant read to {{ s.email }}</button>
+  </form>
+  {% endfor %}
+</div>
+<div class="card">
+  <h2>Who has access</h2>
+  {% if grants %}
+  <table><tr><th>Person</th><th>Access</th><th>Granted</th><th></th></tr>
+  {% for g in grants %}
+  <tr><td>{{ g.email }}</td><td><span class="pill ok">{{ g.permission }}</span></td><td>{{ g.granted_at.strftime('%d %b %Y %H:%M') }}</td>
+  <td><form class="inline" method="post" action="{{ url_for('docs.revoke', doc_id=doc.id, grant_id=g.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn2 danger" type="submit">Revoke now</button></form></td></tr>
+  {% endfor %}</table>
+  {% else %}<p class="sub">Only you can open this document.</p>{% endif %}
+</div>
+<form class="card" method="post" action="{{ url_for('docs.delete', doc_id=doc.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button class="btn2 danger" type="submit">Delete document</button>
+</form>
+{% endif %}
+{% endblock %}
