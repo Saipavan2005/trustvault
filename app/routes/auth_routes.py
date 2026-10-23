@@ -68,3 +68,44 @@ def logout():
     resp = make_response(redirect(url_for("auth.login_form")))
     resp.delete_cookie(auth.COOKIE)
     return resp
+
+
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+    success = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "").strip()
+        role = request.form.get("role", "owner").strip()
+
+        if not email or "@" not in email:
+            error = "Please provide a valid email address."
+        elif not password or len(password) < 6:
+            error = "Password must be at least 6 characters."
+        else:
+            existing = db.one("SELECT id FROM users WHERE email = %s", (email,))
+            if existing:
+                error = "An account with that email already exists."
+            else:
+                from werkzeug.security import generate_password_hash
+                import uuid
+                pw_hash = generate_password_hash(password)
+                user_id = str(uuid.uuid4())
+                try:
+                    db.execute(
+                        "INSERT INTO users (id, email, password_hash, role, active) VALUES (%s, %s, %s, %s, true)",
+                        (user_id, email, pw_hash, role)
+                    )
+                    success = "Account created successfully! You can now sign in."
+                except Exception:
+                    try:
+                        db.execute(
+                            "INSERT INTO users (email, password_hash, role) VALUES (%s, %s, %s)",
+                            (email, pw_hash, role)
+                        )
+                        success = "Account created successfully! You can now sign in."
+                    except Exception as err:
+                        error = f"Registration error: {str(err)}"
+
+    return render_template("login.html", register_mode=True, error=error, success=success)
